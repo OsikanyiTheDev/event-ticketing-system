@@ -1,0 +1,59 @@
+# ─── Terraform ──────────────────────────────────────────────
+# IMPORTANT: never commit the .terraform/ folder (provider binaries, ~600MB+).
+# Only commit .terraform.lock.hcl (the small version lock file).
+**/.terraform/
+.terraform/
+terraform/environments/*/.terraform/
+terraform/modules/*/.terraform/
+*.tfstate
+*.tfstate.*
+crash.log
+crash.*.log
+*.tfvars
+!*.example.tfvars
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+.terraform.tfstate.lock.info
+.terraformrc
+terraform.rc
+
+# ─── Python ─────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+env/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+*.egg-info/
+.coverage
+htmlcov/
+dist/
+build/
+
+# ─── Lambda build artifacts ─────────────────────────────────
+lambda/**/package/
+lambda/**/*.zip
+build/
+
+# ─── Secrets / local config ─────────────────────────────────
+.env
+.env.local
+*.pem
+*.key
+aws_credentials
+.terraform.tfvars
+
+# ─── OS / editor ────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
