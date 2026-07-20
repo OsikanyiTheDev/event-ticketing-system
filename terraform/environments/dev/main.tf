@@ -75,3 +75,29 @@ module "lambda_cancel_registration" {
   environment_variables = local.lambda_env
   common_tags           = local.common_tags
 }
+
+module "api_gateway" {
+  source      = "../../modules/api_gateway"
+  api_name    = "${local.name_prefix}-api"
+  stage_name  = var.environment
+  common_tags = local.common_tags
+
+  lambdas = {
+    list_events = {
+      invoke_arn    = module.lambda_list_events.invoke_arn
+      function_name = module.lambda_list_events.function_name
+    }
+    register = {
+      invoke_arn    = module.lambda_register.invoke_arn
+      function_name = module.lambda_register.function_name
+    }
+    get_registrations = {
+      invoke_arn    = module.lambda_get_registrations.invoke_arn
+      function_name = module.lambda_get_registrations.function_name
+    }
+    cancel_registration = {
+      invoke_arn    = module.lambda_cancel_registration.invoke_arn
+      function_name = module.lambda_cancel_registration.function_name
+    }
+  }
+}

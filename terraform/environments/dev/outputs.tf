@@ -37,3 +37,8 @@ output "cancel_registration_function_name" {
   description = "Name of the DELETE /registration Lambda."
   value       = module.lambda_cancel_registration.function_name
 }
+
+output "api_url" {
+  description = "Public base URL of the REST API."
+  value       = module.api_gateway.api_url
+}

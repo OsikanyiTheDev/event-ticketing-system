@@ -12,3 +12,7 @@ output "qualified_arn" {
   description = "Qualified ARN (with version) — used by API Gateway integration."
   value       = aws_lambda_function.this.qualified_arn
 }
+output "invoke_arn" {
+  description = "Invoke ARN for API Gateway integration."
+  value       = aws_lambda_function.this.invoke_arn
+}
