@@ -49,7 +49,7 @@ data "aws_iam_policy_document" "lambda_dynamodb" {
       "dynamodb:BatchGetItem",
     ]
 
-    resources = var.dynamodb_resource_arns   # ← injected, not hard-coded
+    resources = var.dynamodb_resource_arns # ← injected, not hard-coded
   }
 }
 

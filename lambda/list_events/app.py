@@ -1,4 +1,5 @@
 """GET /events handler — lists all events from DynamoDB."""
+
 import logging
 import os
 

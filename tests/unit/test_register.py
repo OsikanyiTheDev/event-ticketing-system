@@ -1,11 +1,11 @@
 """Tests for the POST /register handler using moto."""
+
 import json
 
 import boto3
 import pytest
-from moto import mock_aws
-
 import register.app as app_module
+from moto import mock_aws
 from register.app import handler
 
 
@@ -84,14 +84,16 @@ def test_register_rejects_invalid_email(tables):
 
 
 def test_register_unknown_event_returns_404(tables):
-    resp = handler(_event({"event_id": "nope", "email": "kwesi@example.com", "name": "Kwesi"}), None)
+    resp = handler(
+        _event({"event_id": "nope", "email": "kwesi@example.com", "name": "Kwesi"}), None
+    )
     assert resp["statusCode"] == 404
 
 
 def test_register_duplicate_returns_409(tables):
     payload = {"event_id": "e1", "email": "kwesi@example.com", "name": "Kwesi"}
-    handler(_event(payload), None)            # first time → 201
-    resp = handler(_event(payload), None)     # second time → 409
+    handler(_event(payload), None)  # first time → 201
+    resp = handler(_event(payload), None)  # second time → 409
     assert resp["statusCode"] == 409
     # still only ONE registration
     assert len(tables["registrations"].scan()["Items"]) == 1

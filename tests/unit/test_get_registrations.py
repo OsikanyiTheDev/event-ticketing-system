@@ -1,12 +1,12 @@
 """Tests for GET /registrations/{email} using moto."""
+
 import json
 
 import boto3
-import pytest
-from moto import mock_aws
-
 import get_registrations.app as app_module
+import pytest
 from get_registrations.app import handler
+from moto import mock_aws
 
 
 @pytest.fixture
@@ -48,9 +48,15 @@ def test_get_registrations_empty(registrations_table):
 
 
 def test_get_registrations_returns_only_that_email(registrations_table):
-    registrations_table.put_item(Item={"registration_id": "r1", "email": "a@x.com", "event_id": "e1"})
-    registrations_table.put_item(Item={"registration_id": "r2", "email": "a@x.com", "event_id": "e2"})
-    registrations_table.put_item(Item={"registration_id": "r3", "email": "b@x.com", "event_id": "e1"})
+    registrations_table.put_item(
+        Item={"registration_id": "r1", "email": "a@x.com", "event_id": "e1"}
+    )
+    registrations_table.put_item(
+        Item={"registration_id": "r2", "email": "a@x.com", "event_id": "e2"}
+    )
+    registrations_table.put_item(
+        Item={"registration_id": "r3", "email": "b@x.com", "event_id": "e1"}
+    )
 
     resp = handler(_event("a@x.com"), None)
     body = json.loads(resp["body"])
@@ -60,7 +66,9 @@ def test_get_registrations_returns_only_that_email(registrations_table):
 
 
 def test_get_registrations_normalizes_email(registrations_table):
-    registrations_table.put_item(Item={"registration_id": "r1", "email": "kwesi@x.com", "event_id": "e1"})
+    registrations_table.put_item(
+        Item={"registration_id": "r1", "email": "kwesi@x.com", "event_id": "e1"}
+    )
     resp = handler(_event("KWESI@X.COM"), None)
     assert json.loads(resp["body"])["data"]["count"] == 1
 
