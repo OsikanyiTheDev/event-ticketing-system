@@ -8,12 +8,12 @@ terraform {
     }
   }
 
-  # Uncomment after bootstrapping S3 + lock table (see README)
-  # backend "s3" {
-  #   bucket         = "event-ticketing-tfstate"
-  #   key            = "event-ticketing/dev/terraform.tfstate"
-  #   region         = "us-east-1"
-  #   dynamodb_table = "terraform-locks"
-  #   encrypt        = true
-  # }
+
+  backend "s3" {
+    bucket       = "osikanyithedev-terraform-state-2026"
+    key          = "dev/terraform.tfstate"
+    region       = "us-east-1"
+    encrypt      = true
+    use_lockfile = true
+  }
 }
