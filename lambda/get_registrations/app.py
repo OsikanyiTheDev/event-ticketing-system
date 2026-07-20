@@ -1,4 +1,5 @@
 """GET /registrations/{email} — list all of a person's registrations."""
+
 import logging
 import os
 
@@ -25,7 +26,7 @@ def _get_table():
 def handler(event, context):
     try:
         raw_email = event.get("pathParameters", {}).get("email", "")
-        email = validate_email(raw_email)      # validates + lowercases
+        email = validate_email(raw_email)  # validates + lowercases
 
         table = _get_table()
         items = []
@@ -34,7 +35,7 @@ def handler(event, context):
             KeyConditionExpression=Key("email").eq(email),
         )
         items.extend(response.get("Items", []))
-        while "LastEvaluatedKey" in response:           # pagination
+        while "LastEvaluatedKey" in response:  # pagination
             response = table.query(
                 IndexName="email-index",
                 KeyConditionExpression=Key("email").eq(email),

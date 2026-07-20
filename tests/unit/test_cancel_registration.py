@@ -1,12 +1,12 @@
 """Tests for DELETE /registration/{id} using moto."""
+
 import json
 
 import boto3
-import pytest
-from moto import mock_aws
-
 import cancel_registration.app as app_module
+import pytest
 from cancel_registration.app import handler
+from moto import mock_aws
 
 
 @pytest.fixture
@@ -52,6 +52,6 @@ def test_cancel_missing_id_returns_400(registrations_table):
 
 def test_cancel_safe_if_already_deleted(registrations_table):
     registrations_table.put_item(Item={"registration_id": "r1", "email": "a@x.com"})
-    handler(_event("r1"), None)            # first delete → 200
-    resp = handler(_event("r1"), None)     # second delete → 404 (no crash)
+    handler(_event("r1"), None)  # first delete → 200
+    resp = handler(_event("r1"), None)  # second delete → 404 (no crash)
     assert resp["statusCode"] == 404

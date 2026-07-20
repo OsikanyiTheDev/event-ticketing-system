@@ -1,13 +1,14 @@
 """Tests for the GET /events handler using moto (AWS mock)."""
+
 import json
 
 import boto3
-import pytest
-from moto import mock_aws
 
 # conftest.py puts lambda/ on sys.path, so these resolve:
 import list_events.app as app_module
+import pytest
 from list_events.app import handler
+from moto import mock_aws
 
 
 @pytest.fixture

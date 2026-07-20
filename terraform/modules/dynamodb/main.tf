@@ -10,7 +10,7 @@ terraform {
 # ───────── Events table: one row per event ─────────
 resource "aws_dynamodb_table" "events" {
   name         = "${var.name_prefix}-events"
-  billing_mode = "PAY_PER_REQUEST"   # on-demand: idle = free
+  billing_mode = "PAY_PER_REQUEST" # on-demand: idle = free
   hash_key     = "event_id"
 
   attribute {
