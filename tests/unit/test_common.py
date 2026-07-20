@@ -2,12 +2,13 @@
 Tests for the shared common library.
 These need NO AWS — pure Python. (Handler tests later will use moto.)
 """
+
 import json
 
 import pytest
 
-from common.responses import CORS_HEADERS, created, error, success
 from common.errors import APIError, ConflictError, NotFoundError, ValidationError
+from common.responses import created, error, success
 from common.validation import (
     parse_json_body,
     require_fields,

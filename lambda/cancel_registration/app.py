@@ -1,4 +1,5 @@
 """DELETE /registration/{id} — cancel (remove) a registration."""
+
 import logging
 import os
 

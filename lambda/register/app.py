@@ -1,8 +1,9 @@
 """POST /register handler — register a person for an event."""
+
 import logging
 import os
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import boto3
 from boto3.dynamodb.conditions import Attr, Key
@@ -38,7 +39,7 @@ def handler(event, context):
         body = parse_json_body(event.get("body"))
         require_fields(body, ["event_id", "email", "name"])
         event_id = sanitize_string(body["event_id"])
-        email = validate_email(body["email"])           # also lowercases
+        email = validate_email(body["email"])  # also lowercases
         name = sanitize_string(body["name"], max_length=200)
 
         # 2. Confirm the event exists
@@ -63,7 +64,7 @@ def handler(event, context):
             "email": email,
             "name": name,
             "status": "confirmed",
-            "created_at": datetime.now(timezone.utc).isoformat(),
+            "created_at": datetime.now(UTC).isoformat(),
         }
         _get_registrations_table().put_item(Item=item)
 
@@ -73,7 +74,7 @@ def handler(event, context):
     except APIError as e:
         return error(e.message, e.status_code)
     except ValueError as e:
-        return error(str(e), status_code=400)     # validation errors → 400
+        return error(str(e), status_code=400)  # validation errors → 400
     except Exception:
         logger.exception("Unexpected error in register")
         return error("Internal server error", status_code=500)
