@@ -28,6 +28,7 @@ logger.setLevel(logging.INFO)
 _registrations_table = None
 _events_table = None
 _sns_client = None
+_ses_client = None
 
 
 def _get_registrations_table():
@@ -71,6 +72,39 @@ def _publish_confirmation(name, email, event_id, registration_id):
         logger.exception("SNS publish failed (registration %s still saved)", registration_id)
 
 
+def _send_confirmation_email(name, email, event_id, registration_id):
+    """Best-effort SES email DIRECTLY to the registrant (SNS can't do this)."""
+    sender = os.environ.get("SES_SENDER_EMAIL", "")
+    if not sender:
+        return  # SES not configured
+
+    global _ses_client
+    if _ses_client is None:
+        _ses_client = boto3.client("ses")
+
+    try:
+        _ses_client.send_email(
+            Source=sender,
+            Destination={"ToAddresses": [email]},
+            Message={
+                "Subject": {"Data": f"You're registered for {event_id}"},
+                "Body": {
+                    "Text": {
+                        "Data": (
+                            f"Hi {name},\n\n"
+                            f"You are registered for event {event_id}.\n"
+                            f"Registration ID: {registration_id}\n\n"
+                            f"See you there!"
+                        )
+                    }
+                },
+            },
+        )
+    except Exception:
+        # SES sandbox may reject unverified recipients; the registration still saved.
+        logger.exception("SES send failed (registration %s still saved)", registration_id)
+
+
 def handler(event, context):
     try:
         # 1. Parse & validate input
@@ -106,8 +140,9 @@ def handler(event, context):
         }
         _get_registrations_table().put_item(Item=item)
 
-        # 5. Send confirmation email via SNS (best-effort)
+        # 5. Send confirmations (best-effort): SNS → admin, SES → registrant
         _publish_confirmation(name, email, event_id, registration_id)
+        _send_confirmation_email(name, email, event_id, registration_id)
 
         logger.info("Created registration %s for %s", registration_id, email)
         return created({"registration_id": registration_id, "status": "confirmed"})

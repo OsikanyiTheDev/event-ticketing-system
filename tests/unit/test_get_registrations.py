@@ -76,3 +76,13 @@ def test_get_registrations_normalizes_email(registrations_table):
 def test_get_registrations_invalid_email_returns_400(registrations_table):
     resp = handler(_event("not-an-email"), None)
     assert resp["statusCode"] == 400
+
+
+def test_get_registrations_handles_url_encoded_email(registrations_table):
+    """Browsers encode '@' as %40 — the handler must decode it before validating."""
+    registrations_table.put_item(
+        Item={"registration_id": "r1", "email": "kwesi@x.com", "event_id": "e1"}
+    )
+    resp = handler({"pathParameters": {"email": "kwesi%40x.com"}}, None)
+    assert resp["statusCode"] == 200
+    assert json.loads(resp["body"])["data"]["count"] == 1

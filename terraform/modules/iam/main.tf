@@ -1,3 +1,12 @@
+###############################################################################
+# modules/iam/main.tf
+# This module builds the Lambda execution role + least-privilege policies.
+#
+# IMPORTANT: it does NOT hard-code the table ARNs. They are PASSED IN via the
+# variable var.dynamodb_resource_arns. That's what makes the module reusable —
+# the environment (not the module) decides which tables the role may touch.
+###############################################################################
+
 terraform {
   required_providers {
     aws = {
@@ -76,6 +85,21 @@ resource "aws_iam_role_policy" "lambda_sns" {
       Effect   = "Allow"
       Action   = "sns:Publish"
       Resource = var.sns_topic_arn
+    }]
+  })
+}
+
+# ───── 5) Optional SES send permission (scoped to the verified identity) ─────
+resource "aws_iam_role_policy" "lambda_ses" {
+  count = var.enable_ses ? 1 : 0
+  name  = "${var.name_prefix}-lambda-ses"
+  role  = aws_iam_role.lambda_exec.id
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect   = "Allow"
+      Action   = ["ses:SendEmail", "ses:SendRawEmail"]
+      Resource = var.ses_identity_arn
     }]
   })
 }

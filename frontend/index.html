@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>🎟️ Event Registration</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <!-- ───────── Header ───────── -->
+  <header class="hero">
+    <div class="hero-inner">
+      <h1>🎟️ Event Registration</h1>
+      <p>Find an event, grab your spot, get a confirmation by email.</p>
+    </div>
+  </header>
+
+  <!-- ───────── Tabs ───────── -->
+  <nav class="tabs">
+    <button class="tab active" data-tab="events">📋 All Events</button>
+    <button class="tab" data-tab="tickets">🎫 My Tickets</button>
+  </nav>
+
+  <main>
+    <!-- ───────── Events tab ───────── -->
+    <section id="tab-events" class="tab-panel active">
+      <div class="section-head">
+        <h2>Upcoming Events</h2>
+        <span id="event-count" class="pill"></span>
+      </div>
+      <p id="loading" class="muted">Loading events…</p>
+      <div id="events-grid" class="grid"></div>
+    </section>
+
+    <!-- ───────── Tickets tab ───────── -->
+    <section id="tab-tickets" class="tab-panel">
+      <div class="section-head">
+        <h2>My Registrations</h2>
+      </div>
+      <form id="lookup-form" class="inline-form">
+        <input type="email" id="lookup-email" required placeholder="you@example.com" />
+        <button type="submit">Look up →</button>
+      </form>
+      <div id="registrations"></div>
+    </section>
+  </main>
+
+  <!-- ───────── Register modal ───────── -->
+  <div id="modal" class="modal-overlay" hidden>
+    <div class="modal">
+      <button class="modal-close" id="modal-close" aria-label="Close">×</button>
+      <h3>Register for <span id="modal-event-name"></span></h3>
+      <form id="register-form">
+        <label>Name
+          <input type="text" id="reg-name" required placeholder="Your name" />
+        </label>
+        <label>Email
+          <input type="email" id="reg-email" required placeholder="you@example.com" />
+        </label>
+        <input type="hidden" id="reg-event" />
+        <button type="submit" class="primary block">Confirm Registration 🎫</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ───────── Toast ───────── -->
+  <div id="toast" class="toast" hidden></div>
+
+  <footer>
+    <p>Serverless Capstone · <span>AWS Lambda · API Gateway · DynamoDB · SNS · S3</span></p>
+    <a href="https://github.com/OsikanyiTheDev/event-ticketing-system" target="_blank" rel="noopener">★ View on GitHub</a>
+  </footer>
+
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a1e769743e3f033a',t:'MTc4NDYwNzYxNA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>

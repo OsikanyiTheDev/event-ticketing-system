@@ -56,3 +56,13 @@ output "alarm_topic_arn" {
   description = "ARN of the CloudWatch alarm-notification topic."
   value       = module.cloudwatch_alarms.alarm_topic_arn
 }
+
+output "website_bucket" {
+  description = "S3 bucket hosting the UI."
+  value       = module.website.bucket_name
+}
+
+output "website_url" {
+  description = "Public URL of the static website (HTTP)."
+  value       = module.website.website_url
+}

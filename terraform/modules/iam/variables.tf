@@ -9,7 +9,7 @@ variable "common_tags" {
 }
 
 variable "dynamodb_resource_arns" {
-  description = "List of DynamoDB table/index ARNs this role may access. Passed in from the environment."
+  description = "List of DynamoDB table/index ARNs this role may access. Passed in from the environment so the module stays reusable and least-privilege."
   type        = list(string)
 }
 
@@ -23,4 +23,16 @@ variable "enable_sns" {
   description = "When true, grant the role sns:Publish on sns_topic_arn."
   type        = bool
   default     = false
+}
+
+variable "enable_ses" {
+  description = "When true, grant the role ses:SendEmail on ses_identity_arn."
+  type        = bool
+  default     = false
+}
+
+variable "ses_identity_arn" {
+  description = "ARN of the SES identity the role may send from. Used only when enable_ses = true."
+  type        = string
+  default     = ""
 }
