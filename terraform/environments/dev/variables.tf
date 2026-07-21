@@ -37,3 +37,7 @@ variable "additional_tags" {
   type        = map(string)
   default     = {}
 }
+variable "notification_email" {
+  description = "Email that receives confirmations. Confirm once via AWS email after apply."
+  type        = string
+}

@@ -1,3 +1,7 @@
+###############################################################################
+# environments/dev/outputs.tf
+###############################################################################
+
 output "events_table_name" {
   description = "Events table name."
   value       = module.dynamodb.events_table_name
@@ -41,4 +45,14 @@ output "cancel_registration_function_name" {
 output "api_url" {
   description = "Public base URL of the REST API."
   value       = module.api_gateway.api_url
+}
+
+output "sns_topic_arn" {
+  description = "ARN of the SNS confirmation topic."
+  value       = module.sns.topic_arn
+}
+
+output "alarm_topic_arn" {
+  description = "ARN of the CloudWatch alarm-notification topic."
+  value       = module.cloudwatch_alarms.alarm_topic_arn
 }

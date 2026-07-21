@@ -1,4 +1,7 @@
-# This file wires modules together. It defines NO resources of its own.
+###############################################################################
+# environments/dev/main.tf  — THE COMPOSITION LAYER
+# Wires modules together and injects environment-specific settings.
+###############################################################################
 
 module "dynamodb" {
   source       = "../../modules/dynamodb"
@@ -7,24 +10,38 @@ module "dynamodb" {
   pitr_enabled = var.dynamodb_point_in_time_recovery
 }
 
+# SNS topic for confirmation emails (must come BEFORE iam, which needs its ARN)
+module "sns" {
+  source           = "../../modules/sns"
+  topic_name       = "${local.name_prefix}-confirmations"
+  display_name     = "Event Registration Confirmations"
+  subscriber_email = var.notification_email
+  common_tags      = local.common_tags
+}
+
 module "iam" {
   source      = "../../modules/iam"
   name_prefix = local.name_prefix
   common_tags = local.common_tags
 
-  # THE WIRING: dynamodb outputs → iam input
+  # THE WIRING: dynamodb module outputs (table ARNs) → iam module input
   dynamodb_resource_arns = [
     module.dynamodb.events_table_arn,
     module.dynamodb.registrations_table_arn,
     "${module.dynamodb.registrations_table_arn}/index/*",
   ]
+
+  # Grant the Lambda role permission to publish confirmations
+  sns_topic_arn = module.sns.topic_arn
+  enable_sns    = true
 }
 
 locals {
-  # Project root = 3 levels up from terraform/environments/dev/
+  # Project root is 3 levels up from terraform/environments/dev/
   repo_root = abspath("${path.module}/../../..")
 
-  # Table names come straight from the dynamodb module outputs — no drift possible
+  # Env vars shared by every Lambda function. Table names come straight from
+  # the dynamodb module's outputs — so the functions and tables can never drift.
   lambda_env = {
     EVENTS_TABLE        = module.dynamodb.events_table_name
     REGISTRATIONS_TABLE = module.dynamodb.registrations_table_name
@@ -32,6 +49,7 @@ locals {
   }
 }
 
+# ───────────────────── The 4 Lambda functions ────────────────────
 module "lambda_list_events" {
   source                = "../../modules/lambda_function"
   function_name         = "${local.name_prefix}-list-events"
@@ -44,14 +62,16 @@ module "lambda_list_events" {
 }
 
 module "lambda_register" {
-  source                = "../../modules/lambda_function"
-  function_name         = "${local.name_prefix}-register"
-  description           = "POST /register — register for an event"
-  handler_app_dir       = "${local.repo_root}/lambda/register"
-  common_dir            = "${local.repo_root}/lambda/common"
-  role_arn              = module.iam.lambda_exec_role_arn
-  environment_variables = local.lambda_env
-  common_tags           = local.common_tags
+  source          = "../../modules/lambda_function"
+  function_name   = "${local.name_prefix}-register"
+  description     = "POST /register — register for an event"
+  handler_app_dir = "${local.repo_root}/lambda/register"
+  common_dir      = "${local.repo_root}/lambda/common"
+  role_arn        = module.iam.lambda_exec_role_arn
+  environment_variables = merge(local.lambda_env, {
+    SNS_TOPIC_ARN = module.sns.topic_arn # only register publishes confirmations
+  })
+  common_tags = local.common_tags
 }
 
 module "lambda_get_registrations" {
@@ -76,12 +96,15 @@ module "lambda_cancel_registration" {
   common_tags           = local.common_tags
 }
 
+# ───────────────────── The REST API (public URLs) ────────────────────
 module "api_gateway" {
   source      = "../../modules/api_gateway"
   api_name    = "${local.name_prefix}-api"
   stage_name  = var.environment
   common_tags = local.common_tags
 
+  # Hand each Lambda's invoke ARN + name to the API module so it can wire
+  # routes → integrations → invoke permissions.
   lambdas = {
     list_events = {
       invoke_arn    = module.lambda_list_events.invoke_arn
@@ -100,4 +123,17 @@ module "api_gateway" {
       function_name = module.lambda_cancel_registration.function_name
     }
   }
+}
+
+module "cloudwatch_alarms" {
+  source      = "../../modules/cloudwatch_alarms"
+  name_prefix = local.name_prefix
+  common_tags = local.common_tags
+  alarm_email = var.notification_email
+  function_names = [
+    module.lambda_list_events.function_name,
+    module.lambda_register.function_name,
+    module.lambda_get_registrations.function_name,
+    module.lambda_cancel_registration.function_name,
+  ]
 }
