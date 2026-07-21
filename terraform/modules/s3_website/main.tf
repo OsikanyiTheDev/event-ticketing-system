@@ -1,3 +1,8 @@
+###############################################################################
+# modules/s3_website/main.tf
+# Static website hosting on S3 for the event-registration UI.
+###############################################################################
+
 terraform {
   required_providers {
     aws = {
@@ -8,12 +13,11 @@ terraform {
 }
 
 resource "aws_s3_bucket" "this" {
-  bucket = var.bucket_name
-  force_destroy = true # auto-empties objects on destroy (deploy_ui.sh uploads files)
-  tags   = var.common_tags 
+  bucket        = var.bucket_name
+  force_destroy = true
+  tags          = var.common_tags
 }
 
-# Enable static-website hosting (index + error document)
 resource "aws_s3_bucket_website_configuration" "this" {
   bucket = aws_s3_bucket.this.id
 
@@ -21,13 +25,11 @@ resource "aws_s3_bucket_website_configuration" "this" {
     suffix = "index.html"
   }
 
-  # Single-page app: send errors back to index.html
   error_document {
     key = "index.html"
   }
 }
 
-# Allow public reads (a public website needs public GetObject)
 resource "aws_s3_bucket_public_access_block" "this" {
   bucket                  = aws_s3_bucket.this.id
   block_public_acls       = false
