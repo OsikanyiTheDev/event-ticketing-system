@@ -1,4 +1,14 @@
-"""POST /register handler — register a person for an event."""
+"""
+POST /register handler — register a person for an event.
+
+FLOW
+  1. validate input (email, event_id, name)
+  2. confirm the event exists          (get_item on Events)
+  3. confirm not already registered     (query email GSI on Registrations)
+  4. write the registration             (put_item)
+  5. publish a confirmation via SNS      (best-effort — never fails the request)
+  ──► 201 Created
+"""
 
 import logging
 import os
@@ -17,6 +27,7 @@ logger.setLevel(logging.INFO)
 
 _registrations_table = None
 _events_table = None
+_sns_client = None
 
 
 def _get_registrations_table():
@@ -33,6 +44,33 @@ def _get_events_table():
     return _events_table
 
 
+def _publish_confirmation(name, email, event_id, registration_id):
+    """Best-effort SNS confirmation. Never fails the registration."""
+    topic_arn = os.environ.get("SNS_TOPIC_ARN", "")
+    if not topic_arn:
+        return  # SNS not configured (tests / earlier stages)
+
+    global _sns_client
+    if _sns_client is None:
+        _sns_client = boto3.client("sns")
+
+    try:
+        _sns_client.publish(
+            TopicArn=topic_arn,
+            Subject=f"Registration confirmed — {event_id}",
+            Message=(
+                f"Hi {name},\n\n"
+                f"You are registered for event {event_id}.\n"
+                f"Registration ID: {registration_id}\n"
+                f"Email: {email}\n\n"
+                f"See you there!"
+            ),
+        )
+    except Exception:
+        # The registration is already saved; a failed email must NOT fail the request.
+        logger.exception("SNS publish failed (registration %s still saved)", registration_id)
+
+
 def handler(event, context):
     try:
         # 1. Parse & validate input
@@ -47,7 +85,7 @@ def handler(event, context):
         if not event_item:
             raise NotFoundError(f"Event '{event_id}' not found")
 
-        # 3. Confirm not already registered (uses the email GSI from Stage 1!)
+        # 3. Confirm not already registered (email GSI)
         existing = _get_registrations_table().query(
             IndexName="email-index",
             KeyConditionExpression=Key("email").eq(email),
@@ -68,13 +106,16 @@ def handler(event, context):
         }
         _get_registrations_table().put_item(Item=item)
 
+        # 5. Send confirmation email via SNS (best-effort)
+        _publish_confirmation(name, email, event_id, registration_id)
+
         logger.info("Created registration %s for %s", registration_id, email)
         return created({"registration_id": registration_id, "status": "confirmed"})
 
     except APIError as e:
         return error(e.message, e.status_code)
     except ValueError as e:
-        return error(str(e), status_code=400)  # validation errors → 400
+        return error(str(e), status_code=400)
     except Exception:
         logger.exception("Unexpected error in register")
         return error("Internal server error", status_code=500)
