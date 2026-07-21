@@ -33,7 +33,7 @@ module "iam" {
 
   # Grant the Lambda role permission to publish confirmations
   sns_topic_arn = module.sns.topic_arn
-  enable_sns = true
+  enable_sns    = true
 }
 
 locals {
