@@ -1,0 +1,88 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 620" font-family="Segoe UI, Helvetica, Arial, sans-serif">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#475569"/>
+    </marker>
+    <style>
+      .box { stroke-width: 2; rx: 10; ry: 10; }
+      .lbl { font-size: 15px; font-weight: 700; fill: #0f172a; }
+      .sub { font-size: 12px; fill: #475569; }
+      .edge { stroke: #475569; stroke-width: 2; fill: none; }
+      .ttl { font-size: 22px; font-weight: 800; fill: #0f172a; }
+    </style>
+  </defs>
+
+  <!-- Title -->
+  <text x="480" y="38" text-anchor="middle" class="ttl">Event Registration &amp; Ticketing System — Architecture</text>
+
+  <!-- Client -->
+  <rect class="box" x="30" y="150" width="150" height="70" fill="#eef2ff" stroke="#6366f1"/>
+  <text x="105" y="180" text-anchor="middle" class="lbl">Client</text>
+  <text x="105" y="200" text-anchor="middle" class="sub">curl / browser / app</text>
+
+  <!-- API Gateway -->
+  <rect class="box" x="230" y="130" width="170" height="110" fill="#fff7ed" stroke="#f97316"/>
+  <text x="315" y="160" text-anchor="middle" class="lbl">API Gateway</text>
+  <text x="315" y="180" text-anchor="middle" class="sub">REST · /dev stage</text>
+  <text x="315" y="200" text-anchor="middle" class="sub" font-size="11">GET /events · POST /register</text>
+  <text x="315" y="216" text-anchor="middle" class="sub" font-size="11">GET /registrations/{email}</text>
+  <text x="315" y="232" text-anchor="middle" class="sub" font-size="11">DELETE /registration/{id}</text>
+
+  <!-- Lambda cluster -->
+  <rect class="box" x="450" y="90" width="190" height="200" fill="#fffbeb" stroke="#d97706" stroke-dasharray="5 3"/>
+  <text x="545" y="112" text-anchor="middle" class="lbl">AWS Lambda (Python 3.12)</text>
+  <rect class="box" x="465" y="124" width="160" height="34" fill="#fde68a" stroke="#d97706"/>
+  <text x="545" y="146" text-anchor="middle" class="sub" font-weight="700">list_events · register</text>
+  <rect class="box" x="465" y="166" width="160" height="34" fill="#fde68a" stroke="#d97706"/>
+  <text x="545" y="188" text-anchor="middle" class="sub" font-weight="700">get_registrations</text>
+  <rect class="box" x="465" y="208" width="160" height="34" fill="#fde68a" stroke="#d97706"/>
+  <text x="545" y="230" text-anchor="middle" class="sub" font-weight="700">cancel_registration</text>
+  <rect class="box" x="465" y="250" width="160" height="26" fill="#fef3c7" stroke="#d97706"/>
+  <text x="545" y="267" text-anchor="middle" class="sub" font-size="10">shared: common/ (validation, errors)</text>
+
+  <!-- DynamoDB -->
+  <rect class="box" x="740" y="120" width="190" height="130" fill="#f5f3ff" stroke="#7c3aed"/>
+  <text x="835" y="148" text-anchor="middle" class="lbl">DynamoDB</text>
+  <rect class="box" x="755" y="160" width="160" height="34" fill="#ddd6fe" stroke="#7c3aed"/>
+  <text x="835" y="182" text-anchor="middle" class="sub" font-weight="700">Events (PK: event_id)</text>
+  <rect class="box" x="755" y="202" width="160" height="40" fill="#ddd6fe" stroke="#7c3aed"/>
+  <text x="835" y="220" text-anchor="middle" class="sub" font-weight="700">Registrations</text>
+  <text x="835" y="236" text-anchor="middle" class="sub" font-size="10">GSI: email-index</text>
+
+  <!-- SNS + Email -->
+  <rect class="box" x="450" y="360" width="190" height="80" fill="#ecfdf5" stroke="#059669"/>
+  <text x="545" y="390" text-anchor="middle" class="lbl">SNS Topic</text>
+  <text x="545" y="410" text-anchor="middle" class="sub">confirmation email → 📧</text>
+  <text x="545" y="426" text-anchor="middle" class="sub" font-size="10">(best-effort publish)</text>
+
+  <!-- CloudWatch -->
+  <rect class="box" x="690" y="360" width="240" height="80" fill="#fef2f2" stroke="#dc2626"/>
+  <text x="810" y="390" text-anchor="middle" class="lbl">CloudWatch</text>
+  <text x="810" y="410" text-anchor="middle" class="sub">Logs (14d) · Alarms</text>
+  <text x="810" y="426" text-anchor="middle" class="sub" font-size="10">error-rate &gt; 5% · throttles</text>
+
+  <!-- GitHub / CI -->
+  <rect class="box" x="30" y="360" width="190" height="80" fill="#f8fafc" stroke="#334155"/>
+  <text x="125" y="390" text-anchor="middle" class="lbl">GitHub + Actions</text>
+  <text x="125" y="410" text-anchor="middle" class="sub">CI: ruff · pytest · tf validate</text>
+  <text x="125" y="426" text-anchor="middle" class="sub" font-size="10">branch protection · tags</text>
+
+  <!-- Budgets -->
+  <rect class="box" x="250" y="480" width="200" height="60" fill="#ecfdf5" stroke="#059669"/>
+  <text x="350" y="506" text-anchor="middle" class="lbl">AWS Budgets</text>
+  <text x="350" y="524" text-anchor="middle" class="sub">$5/mo · Free-Tier guard</text>
+
+  <!-- Terraform -->
+  <rect class="box" x="490" y="480" width="200" height="60" fill="#f5f3ff" stroke="#7c3aed"/>
+  <text x="590" y="506" text-anchor="middle" class="lbl">Terraform (IaC)</text>
+  <text x="590" y="524" text-anchor="middle" class="sub">modules · remote S3 state</text>
+
+  <!-- Edges -->
+  <line class="edge" x1="180" y1="185" x2="225" y2="185" marker-end="url(#arrow)"/>
+  <line class="edge" x1="400" y1="185" x2="445" y2="170" marker-end="url(#arrow)"/>
+  <line class="edge" x1="640" y1="155" x2="735" y2="170" marker-end="url(#arrow)"/>
+  <line class="edge" x1="640" y1="210" x2="735" y2="210" marker-end="url(#arrow)"/>
+  <line class="edge" x1="545" y1="290" x2="545" y2="355" marker-end="url(#arrow)"/>
+  <line class="edge" x1="545" y1="400" x2="685" y2="400" marker-end="url(#arrow)"/>
+  <line class="edge" x1="640" y1="250" x2="810" y2="355" marker-end="url(#arrow)"/>
+</svg>
