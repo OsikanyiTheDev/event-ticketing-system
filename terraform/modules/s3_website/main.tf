@@ -10,7 +10,7 @@ terraform {
 resource "aws_s3_bucket" "this" {
   bucket = var.bucket_name
   force_destroy = true # auto-empties objects on destroy (deploy_ui.sh uploads files)
-  tags   = var.common_tags
+  tags   = var.common_tags 
 }
 
 # Enable static-website hosting (index + error document)
