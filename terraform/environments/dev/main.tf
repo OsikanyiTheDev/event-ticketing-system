@@ -124,3 +124,16 @@ module "api_gateway" {
     }
   }
 }
+
+module "cloudwatch_alarms" {
+  source      = "../../modules/cloudwatch_alarms"
+  name_prefix = local.name_prefix
+  common_tags = local.common_tags
+  alarm_email = var.notification_email
+  function_names = [
+    module.lambda_list_events.function_name,
+    module.lambda_register.function_name,
+    module.lambda_get_registrations.function_name,
+    module.lambda_cancel_registration.function_name,
+  ]
+}

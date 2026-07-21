@@ -51,3 +51,8 @@ output "sns_topic_arn" {
   description = "ARN of the SNS confirmation topic."
   value       = module.sns.topic_arn
 }
+
+output "alarm_topic_arn" {
+  description = "ARN of the CloudWatch alarm-notification topic."
+  value       = module.cloudwatch_alarms.alarm_topic_arn
+}
