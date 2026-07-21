@@ -33,7 +33,7 @@ module "iam" {
 
   # Grant the Lambda role permission to publish confirmations
   sns_topic_arn = module.sns.topic_arn
-  enable_sns    = true
+  enable_sns    = true # static gate → count is knowable at plan time
 }
 
 locals {
@@ -96,7 +96,6 @@ module "lambda_cancel_registration" {
   common_tags           = local.common_tags
 }
 
-# ───────────────────── The REST API (public URLs) ────────────────────
 module "api_gateway" {
   source      = "../../modules/api_gateway"
   api_name    = "${local.name_prefix}-api"
@@ -125,6 +124,7 @@ module "api_gateway" {
   }
 }
 
+# ───────────────────── Monitoring & alarms ────────────────────
 module "cloudwatch_alarms" {
   source      = "../../modules/cloudwatch_alarms"
   name_prefix = local.name_prefix
@@ -136,4 +136,12 @@ module "cloudwatch_alarms" {
     module.lambda_get_registrations.function_name,
     module.lambda_cancel_registration.function_name,
   ]
+}
+
+# ───────────────────── Cost control (Free Tier) ────────────────────
+module "budgets" {
+  source             = "../../modules/budgets"
+  name_prefix        = local.name_prefix
+  budget_amount      = var.monthly_budget_usd
+  notification_email = var.notification_email
 }
