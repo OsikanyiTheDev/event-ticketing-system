@@ -19,6 +19,12 @@ module "sns" {
   common_tags      = local.common_tags
 }
 
+# SES sender identity (for emailing the registrant directly)
+module "ses" {
+  source       = "../../modules/ses"
+  sender_email = var.notification_email
+}
+
 module "iam" {
   source      = "../../modules/iam"
   name_prefix = local.name_prefix
@@ -31,9 +37,13 @@ module "iam" {
     "${module.dynamodb.registrations_table_arn}/index/*",
   ]
 
-  # Grant the Lambda role permission to publish confirmations
+  # SNS → admin notification
   sns_topic_arn = module.sns.topic_arn
   enable_sns    = true # static gate → count is knowable at plan time
+
+  # SES → registrant confirmation
+  enable_ses       = true
+  ses_identity_arn = module.ses.identity_arn
 }
 
 locals {
@@ -69,7 +79,8 @@ module "lambda_register" {
   common_dir      = "${local.repo_root}/lambda/common"
   role_arn        = module.iam.lambda_exec_role_arn
   environment_variables = merge(local.lambda_env, {
-    SNS_TOPIC_ARN = module.sns.topic_arn # only register publishes confirmations
+    SNS_TOPIC_ARN    = module.sns.topic_arn    # admin notification
+    SES_SENDER_EMAIL = module.ses.sender_email # emails the registrant directly
   })
   common_tags = local.common_tags
 }
@@ -144,4 +155,11 @@ module "budgets" {
   name_prefix        = local.name_prefix
   budget_amount      = var.monthly_budget_usd
   notification_email = var.notification_email
+}
+
+# ───────────────────── Static website (the UI) ────────────────────
+module "website" {
+  source      = "../../modules/s3_website"
+  bucket_name = var.website_bucket_name
+  common_tags = local.common_tags
 }

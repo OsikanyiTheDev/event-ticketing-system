@@ -1,7 +1,18 @@
-"""GET /registrations/{email} — list all of a person's registrations."""
+"""
+GET /registrations/{email} — list all of a person's registrations.
+
+Flow
+  API Gateway ──► Lambda(event) ──► validate email from path ──►
+     query the email-index GSI ──► return matching registrations
+
+The email arrives in event["pathParameters"]["email"] (API Gateway extracts
+the {email} part of the URL path). We re-validate it — path params are user
+input too, so the "never trust input" rule applies.
+"""
 
 import logging
 import os
+from urllib.parse import unquote
 
 import boto3
 from boto3.dynamodb.conditions import Key
@@ -25,9 +36,11 @@ def _get_table():
 
 def handler(event, context):
     try:
-        raw_email = event.get("pathParameters", {}).get("email", "")
-        email = validate_email(raw_email)  # validates + lowercases
+        # Path params can arrive URL-encoded (e.g. %40 for @) — decode first.
+        raw_email = unquote(event.get("pathParameters", {}).get("email", ""))
+        email = validate_email(raw_email)  # validates + normalizes to lowercase
 
+        # Query the email GSI — same index the register handler uses for dup checks.
         table = _get_table()
         items = []
         response = table.query(
@@ -35,7 +48,7 @@ def handler(event, context):
             KeyConditionExpression=Key("email").eq(email),
         )
         items.extend(response.get("Items", []))
-        while "LastEvaluatedKey" in response:  # pagination
+        while "LastEvaluatedKey" in response:
             response = table.query(
                 IndexName="email-index",
                 KeyConditionExpression=Key("email").eq(email),

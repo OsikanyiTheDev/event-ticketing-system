@@ -1,6 +1,7 @@
 """Tests for the POST /register handler using moto."""
 
 import json
+from unittest.mock import MagicMock
 
 import boto3
 import pytest
@@ -20,6 +21,8 @@ def tables(monkeypatch):
 
     app_module._events_table = None
     app_module._registrations_table = None
+    app_module._sns_client = None
+    app_module._ses_client = None
 
     with mock_aws():
         dynamo = boto3.resource("dynamodb", region_name="us-east-1")
@@ -111,3 +114,25 @@ def test_register_same_email_different_events_ok(tables):
 def test_register_rejects_garbage_body(tables):
     resp = handler({"body": "not json"}, None)
     assert resp["statusCode"] == 400
+
+
+def test_register_publishes_sns_when_configured(tables, monkeypatch):
+    """When SNS_TOPIC_ARN is set, a confirmation message is published."""
+    monkeypatch.setenv("SNS_TOPIC_ARN", "arn:aws:sns:us-east-1:123456789012:test-topic")
+    mock_sns = MagicMock()
+    app_module._sns_client = mock_sns  # inject a fake SNS client
+
+    resp = handler(_event({"event_id": "e1", "email": "kwesi@example.com", "name": "Kwesi"}), None)
+    assert resp["statusCode"] == 201
+    # publish was called exactly once with the registration details
+    mock_sns.publish.assert_called_once()
+    kwargs = mock_sns.publish.call_args.kwargs
+    assert kwargs["TopicArn"] == "arn:aws:sns:us-east-1:123456789012:test-topic"
+    assert "Kwesi" in kwargs["Message"]
+    assert "e1" in kwargs["Message"]
+
+
+def test_register_succeeds_without_sns_configured(tables):
+    """No SNS_TOPIC_ARN → registration still succeeds (SNS is optional)."""
+    resp = handler(_event({"event_id": "e1", "email": "kwesi@example.com", "name": "Kwesi"}), None)
+    assert resp["statusCode"] == 201

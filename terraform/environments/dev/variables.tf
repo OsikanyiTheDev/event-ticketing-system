@@ -53,3 +53,9 @@ variable "monthly_budget_usd" {
   type        = string
   default     = "5.00"
 }
+
+variable "website_bucket_name" {
+  description = "Globally-unique S3 bucket name for the static website."
+  type        = string
+  default     = "osikanyi-event-ticketing-ui"
+}
