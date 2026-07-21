@@ -1,3 +1,8 @@
+###############################################################################
+# environments/dev/variables.tf
+# Inputs for the dev environment.
+###############################################################################
+
 variable "project_name" {
   description = "Short prefix for resources (lowercase, digits, hyphens)."
   type        = string
@@ -10,7 +15,7 @@ variable "project_name" {
 }
 
 variable "environment" {
-  description = "Deployment environment."
+  description = "Deployment environment. Drives resource naming & tagging."
   type        = string
   default     = "dev"
 
@@ -21,19 +26,30 @@ variable "environment" {
 }
 
 variable "aws_region" {
-  description = "AWS region."
+  description = "AWS region. us-east-1 has the best Free Tier coverage."
   type        = string
   default     = "us-east-1"
 }
 
 variable "dynamodb_point_in_time_recovery" {
-  description = "Enable DynamoDB PITR. Off by default for Free Tier."
+  description = "Enable DynamoDB Point-in-Time Recovery. Off by default for Free Tier."
   type        = bool
   default     = false
 }
 
 variable "additional_tags" {
-  description = "Extra tags merged into the common set."
+  description = "Extra tags merged into the common set (e.g. { Owner = \"name\" })."
   type        = map(string)
   default     = {}
+}
+
+variable "notification_email" {
+  description = "Email address that receives registration confirmation messages. Must be confirmed once via the AWS email after apply."
+  type        = string
+}
+
+variable "monthly_budget_usd" {
+  description = "Monthly AWS spend cap in USD. Alerts fire at 50% actual and 100% forecasted."
+  type        = string
+  default     = "5.00"
 }

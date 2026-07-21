@@ -59,3 +59,9 @@ variable "common_tags" {
   type        = map(string)
   default     = {}
 }
+
+variable "log_retention_in_days" {
+  description = "How long to keep CloudWatch Logs. Lower = cheaper."
+  type        = number
+  default     = 14
+}

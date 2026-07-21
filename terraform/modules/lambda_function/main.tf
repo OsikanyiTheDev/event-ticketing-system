@@ -37,6 +37,12 @@ data "archive_file" "this" {
   }
 }
 
+resource "aws_cloudwatch_log_group" "this" {
+  name              = "/aws/lambda/${var.function_name}"
+  retention_in_days = var.log_retention_in_days
+  tags              = var.common_tags
+}
+
 resource "aws_lambda_function" "this" {
   function_name    = var.function_name
   description      = var.description
