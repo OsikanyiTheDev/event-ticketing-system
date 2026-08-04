@@ -59,3 +59,15 @@ variable "website_bucket_name" {
   type        = string
   default     = "osikanyi-event-ticketing-ui"
 }
+
+variable "domain_name" {
+  description = "Apex domain (managed by the terraform/domain layer)."
+  type        = string
+  default     = "osikanyi.online"
+}
+
+variable "app_subdomain" {
+  description = "Full subdomain for this app's CloudFront distribution."
+  type        = string
+  default     = "ticketservice.osikanyi.online"
+}

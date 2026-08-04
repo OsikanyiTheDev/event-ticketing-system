@@ -19,11 +19,10 @@ module "sns" {
   common_tags      = local.common_tags
 }
 
-# SES sender identity (for emailing the registrant directly)
-module "ses" {
-  source       = "../../modules/ses"
-  sender_email = var.notification_email
-}
+# SES sender = the verified domain (managed by the terraform/domain layer).
+# The app only needs the IAM permission to send FROM it; the identity itself
+# (osikanyi.online + DKIM) is verified in the domain layer and persists.
+data "aws_caller_identity" "current" {}
 
 module "iam" {
   source      = "../../modules/iam"
@@ -41,9 +40,9 @@ module "iam" {
   sns_topic_arn = module.sns.topic_arn
   enable_sns    = true # static gate → count is knowable at plan time
 
-  # SES → registrant confirmation
+  # SES → registrant confirmation (sender = hello@osikanyi.online)
   enable_ses       = true
-  ses_identity_arn = module.ses.identity_arn
+  ses_identity_arn = "arn:aws:ses:us-east-1:${data.aws_caller_identity.current.account_id}:identity/${var.domain_name}"
 }
 
 locals {
@@ -79,8 +78,8 @@ module "lambda_register" {
   common_dir      = "${local.repo_root}/lambda/common"
   role_arn        = module.iam.lambda_exec_role_arn
   environment_variables = merge(local.lambda_env, {
-    SNS_TOPIC_ARN    = module.sns.topic_arn    # admin notification
-    SES_SENDER_EMAIL = module.ses.sender_email # emails the registrant directly
+    SNS_TOPIC_ARN    = module.sns.topic_arn       # admin notification
+    SES_SENDER_EMAIL = "hello@${var.domain_name}" # emails the registrant directly
   })
   common_tags = local.common_tags
 }
@@ -162,4 +161,26 @@ module "website" {
   source      = "../../modules/s3_website"
   bucket_name = var.website_bucket_name
   common_tags = local.common_tags
+}
+
+# ───────────────────── CloudFront + custom domain (HTTPS) ────────────────────
+# Reads the persistent zone + cert from the domain layer (terraform/domain).
+data "aws_route53_zone" "main" {
+  name         = "${var.domain_name}."
+  private_zone = false
+}
+
+data "aws_acm_certificate" "app" {
+  domain      = var.app_subdomain
+  types       = ["AMAZON_ISSUED"]
+  most_recent = true
+}
+
+module "cloudfront" {
+  source              = "../../modules/cloudfront"
+  website_endpoint    = module.website.website_endpoint
+  domain_name         = var.app_subdomain
+  acm_certificate_arn = data.aws_acm_certificate.app.arn
+  route53_zone_id     = data.aws_route53_zone.main.zone_id
+  common_tags         = local.common_tags
 }

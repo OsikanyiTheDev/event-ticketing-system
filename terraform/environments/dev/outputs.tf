@@ -66,3 +66,13 @@ output "website_url" {
   description = "Public URL of the static website (HTTP)."
   value       = module.website.website_url
 }
+
+output "cloudfront_domain" {
+  description = "CloudFront distribution domain (dXXXX.cloudfront.net)."
+  value       = module.cloudfront.distribution_domain_name
+}
+
+output "custom_domain_url" {
+  description = "The public HTTPS custom-domain URL."
+  value       = module.cloudfront.website_url
+}

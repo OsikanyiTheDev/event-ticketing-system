@@ -3,15 +3,30 @@
 End-to-end instructions for deploying the Event Registration & Ticketing System
 from a clean AWS account.
 
+> ## ⚡ Current state (two-layer architecture)
+> The project now runs across **two Terraform layers**:
+> - **`terraform/domain/`** — *persistent platform*: Route 53 zone, ACM cert, SES domain (+ SPF/DMARC). Applied **once**, never destroyed with the app.
+> - **`terraform/environments/dev/`** — *the app*: DynamoDB, Lambda, API Gateway, CloudFront, S3 UI, alarms. Destroy/restore freely.
+>
+> **One-command restore** (rebuilds both layers + seeds + deploys UI):
+> ```bash
+> source .venv/bin/activate
+> bash scripts/restore.sh
+> ```
+> Then open **`https://ticketservice.osikanyi.online`** (HTTPS via CloudFront + ACM).
+> The **one manual step** that stays outside code: pointing Namecheap's nameservers at Route 53 (one-time; see Step 1).
+>
+> The detailed steps below trace the original build; the quick restore above is the day-to-day path.
+
 ## Prerequisites
 
-| Requirement | Check |
-|-------------|-------|
-| AWS account + admin access | `aws sts get-caller-identity` |
-| AWS CLI configured | `aws configure` |
-| Terraform ≥ 1.10 | `terraform --version` |
-| Python 3.12 + venv | `python3 --version` |
-| S3 state bucket exists | see [Step 1](#1-one-time-state-backend) |
+| Requirement                | Check                                   |
+| -------------------------- | --------------------------------------- |
+| AWS account + admin access | `aws sts get-caller-identity`           |
+| AWS CLI configured         | `aws configure`                         |
+| Terraform ≥ 1.10           | `terraform --version`                   |
+| Python 3.12 + venv         | `python3 --version`                     |
+| S3 state bucket exists     | see [Step 1](#1-one-time-state-backend) |
 
 ---
 
@@ -104,14 +119,14 @@ terraform destroy     # removes ALL app resources (keeps the state bucket)
 
 ## Cost Optimization (how this stays in Free Tier)
 
-| Strategy | Where |
-|----------|-------|
-| **DynamoDB on-demand** (pay per request, idle = free) | `modules/dynamodb` `PAY_PER_REQUEST` |
-| **Lambda 128 MB** (smallest, cheapest) | `modules/lambda_function` default |
-| **Log retention 14 days** (no infinite log growth) | `modules/lambda_function` `log_retention_in_days` |
-| **API Gateway** (pay per call, idle = free) | REST API, serverless |
-| **AWS Budget $5/mo** with 50% + 100% alerts | `modules/budgets` |
-| **Daily `terraform destroy`** between dev sessions | operational habit |
+| Strategy                                              | Where                                             |
+| ----------------------------------------------------- | ------------------------------------------------- |
+| **DynamoDB on-demand** (pay per request, idle = free) | `modules/dynamodb` `PAY_PER_REQUEST`              |
+| **Lambda 128 MB** (smallest, cheapest)                | `modules/lambda_function` default                 |
+| **Log retention 14 days** (no infinite log growth)    | `modules/lambda_function` `log_retention_in_days` |
+| **API Gateway** (pay per call, idle = free)           | REST API, serverless                              |
+| **AWS Budget $5/mo** with 50% + 100% alerts           | `modules/budgets`                                 |
+| **Daily `terraform destroy`** between dev sessions    | operational habit                                 |
 
 All resources use **serverless** services (no always-on servers), so an idle
 deployment costs ~$0. The only standing cost is the S3 state bucket's storage
