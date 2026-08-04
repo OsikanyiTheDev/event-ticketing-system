@@ -1,0 +1,61 @@
+###############################################################################
+# CD pipeline — auto-deploys the app layer on every merge to `main`.
+#
+# Auth: AWS OIDC (no long-lived keys). GitHub assumes the role created in
+# terraform/domain (github-actions-deploy) using a short-lived token.
+#
+# Trigger: push to main (i.e. when a PR merges). Deploys the APP layer only;
+# the domain layer is applied manually (it rarely changes and must not break).
+###############################################################################
+name: CD (Deploy)
+
+on:
+    push:
+        branches: [main]
+
+permissions:
+    id-token: write # required for OIDC
+    contents: read
+
+jobs:
+    deploy:
+        name: Terraform Apply (app layer)
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+
+            - name: Configure AWS credentials (OIDC)
+              uses: aws-actions/configure-aws-credentials@v4
+              with:
+                  role-to-assume: arn:aws:iam::360831508664:role/github-actions-deploy
+                  aws-region: us-east-1
+
+            - name: Setup Terraform
+              uses: hashicorp/setup-terraform@v3
+              with:
+                  terraform_version: 1.10.5
+
+            # tfvars is gitignored — regenerate it in CI from known values
+            - name: Write terraform.tfvars
+              run: |
+                  cat > terraform/environments/dev/terraform.tfvars <<'EOF'
+                  notification_email  = "osikanyie@gmail.com"
+                  website_bucket_name = "osikanyi-event-ticketing-ui"
+                  domain_name         = "osikanyi.online"
+                  app_subdomain       = "ticketservice.osikanyi.online"
+                  monthly_budget_usd  = "5.00"
+                  additional_tags = {
+                    Owner     = "OsikanyiTheDev"
+                    Course    = "AWS-Cloud-Intensive"
+                    Portfolio = "true"
+                  }
+                  EOF
+
+            - name: Terraform init
+              run: terraform init -input=false
+              working-directory: terraform/environments/dev
+
+            - name: Terraform apply
+              run: terraform apply -auto-approve -input=false
+              working-directory: terraform/environments/dev

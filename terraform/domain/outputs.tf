@@ -26,3 +26,8 @@ output "ses_identity_arn" {
   description = "ARN of the SES domain identity (for the app's IAM policy)."
   value       = aws_ses_domain_identity.main.arn
 }
+
+output "github_deploy_role_arn" {
+  description = "ARN of the OIDC role GitHub Actions assumes for CD."
+  value       = aws_iam_role.github_deploy.arn
+}
