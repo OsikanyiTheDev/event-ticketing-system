@@ -1,4 +1,5 @@
 """DELETE /admin/events/{id} — delete an event (admin only, API-key protected)."""
+
 import logging
 import os
 

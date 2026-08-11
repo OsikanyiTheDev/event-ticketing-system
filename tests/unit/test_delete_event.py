@@ -1,12 +1,10 @@
 """Tests for DELETE /admin/events/{id} (delete_event handler)."""
-import json
 
 import boto3
-import pytest
-from moto import mock_aws
-
 import delete_event.app as app_module
+import pytest
 from delete_event.app import handler
+from moto import mock_aws
 
 
 @pytest.fixture
@@ -31,7 +29,11 @@ def events_table(monkeypatch):
 
 
 def _event(event_id, api_key="secret-key-123"):
-    return {"httpMethod": "DELETE", "headers": {"x-api-key": api_key}, "pathParameters": {"id": event_id}}
+    return {
+        "httpMethod": "DELETE",
+        "headers": {"x-api-key": api_key},
+        "pathParameters": {"id": event_id},
+    }
 
 
 def test_delete_event_success(events_table):
