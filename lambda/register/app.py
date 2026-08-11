@@ -128,6 +128,25 @@ def handler(event, context):
         if existing.get("Items"):
             raise ConflictError("You are already registered for this event")
 
+        # 3.5. Check capacity (if the event has one)
+        capacity = event_item.get("capacity")
+        if capacity:
+            capacity_int = int(capacity)
+            count_resp = _get_registrations_table().scan(
+                FilterExpression=Attr("event_id").eq(event_id),
+                Select="COUNT",
+            )
+            current = count_resp.get("Count", 0)
+            while "LastEvaluatedKey" in count_resp:
+                count_resp = _get_registrations_table().scan(
+                    FilterExpression=Attr("event_id").eq(event_id),
+                    Select="COUNT",
+                    ExclusiveStartKey=count_resp["LastEvaluatedKey"],
+                )
+                current += count_resp.get("Count", 0)
+            if current >= capacity_int:
+                raise ConflictError(f"Event is full ({capacity_int} seats)")
+
         # 4. Create the registration
         registration_id = str(uuid.uuid4())
         item = {

@@ -43,6 +43,7 @@ document.querySelectorAll(".tab").forEach((btn) => {
     document.querySelectorAll(".tab-panel").forEach((p) => p.classList.remove("active"));
     btn.classList.add("active");
     document.getElementById(`tab-${btn.dataset.tab}`).classList.add("active");
+    if (btn.dataset.tab === "admin") adminLoadEvents();
   });
 });
 
@@ -63,28 +64,60 @@ async function loadEvents() {
       return;
     }
 
-    grid.innerHTML = EVENTS.map(
-      (e, i) => `
-      <div class="card">
-        <div class="card-banner">${iconFor(i)}</div>
-        <div class="card-body">
-          <h3>${escapeHtml(e.name)}</h3>
-          <p class="meta">📅 ${escapeHtml(e.date || "Date TBA")}</p>
-          <p class="meta">📍 ${escapeHtml(e.location || "Location TBA")}</p>
-          <p class="meta">🎟️ ${escapeHtml(String(e.capacity ?? "—"))} seats</p>
-          ${e.description ? `<p class="desc">${escapeHtml(e.description)}</p>` : ""}
-          <div class="card-cta">
-            <button class="primary block" onclick="openRegister('${escapeHtml(e.event_id)}')">Register</button>
-          </div>
-        </div>
-      </div>`
-    ).join("");
+    renderEvents(EVENTS);
   } catch (err) {
     loading.textContent = `⚠️ ${err.message}`;
     loading.className = "muted";
     toast(err.message, "err");
   }
 }
+
+// ───────── Render events (with search + sold-out) ─────────
+function renderEvents(list) {
+  const grid = document.getElementById("events-grid");
+  if (!list.length) {
+    grid.innerHTML = '<p class="muted">No events match your search.</p>';
+    return;
+  }
+  grid.innerHTML = list
+    .map((e, i) => {
+      const cap = e.capacity ? parseInt(e.capacity, 10) : null;
+      const reg = e.registered_count || 0;
+      const soldOut = cap !== null && reg >= cap;
+      const seats = cap ? `${reg} / ${cap} seats` : "Unlimited";
+      return `
+      <div class="card">
+        <div class="card-banner">${soldOut ? "🚫" : iconFor(i)}</div>
+        <div class="card-body">
+          <h3>${escapeHtml(e.name)} ${soldOut ? '<span class="sold-out">Sold Out</span>' : ""}</h3>
+          <p class="meta">📅 ${escapeHtml(e.date || "Date TBA")}</p>
+          <p class="meta">📍 ${escapeHtml(e.location || "Location TBA")}</p>
+          <p class="meta">🎟️ ${seats}</p>
+          ${e.description ? `<p class="desc">${escapeHtml(e.description)}</p>` : ""}
+          <div class="card-cta">
+            <button class="primary block" ${soldOut ? "disabled" : ""}
+              onclick="${soldOut ? "" : `openRegister('${escapeHtml(e.event_id)}')`}">
+              ${soldOut ? "Sold Out" : "Register"}
+            </button>
+          </div>
+        </div>
+      </div>`;
+    })
+    .join("");
+}
+
+// Search filter (client-side, instant)
+document.getElementById("event-search").addEventListener("input", (e) => {
+  const q = e.target.value.toLowerCase();
+  renderEvents(
+    EVENTS.filter(
+      (ev) =>
+        (ev.name || "").toLowerCase().includes(q) ||
+        (ev.location || "").toLowerCase().includes(q) ||
+        (ev.description || "").toLowerCase().includes(q)
+    )
+  );
+});
 
 // ───────── Register modal ─────────
 function openRegister(eventId) {
@@ -177,6 +210,92 @@ async function cancelReg(id) {
   }
 }
 window.cancelReg = cancelReg;
+
+// ───────── Admin: event list + delete ─────────
+async function adminLoadEvents() {
+  const list = document.getElementById("admin-events-list");
+  const loading = document.getElementById("admin-loading");
+  const count = document.getElementById("admin-count");
+  try {
+    const data = await api("/events");
+    const events = data.events || [];
+    if (loading) loading.style.display = "none";
+    count.textContent = `${events.length} event${events.length === 1 ? "" : "s"}`;
+    if (!events.length) {
+      list.innerHTML = '<p class="muted">No events yet.</p>';
+      return;
+    }
+    list.innerHTML = events
+      .map(
+        (e) => `
+        <div class="admin-event-row">
+          <span><strong>${escapeHtml(e.name)}</strong> · <span class="muted">${escapeHtml(e.event_id)}</span></span>
+          <button class="small danger" onclick="adminDeleteEvent('${escapeHtml(e.event_id)}')">Delete</button>
+        </div>`
+      )
+      .join("");
+  } catch (err) {
+    if (loading) loading.textContent = `Error: ${err.message}`;
+  }
+}
+window.adminLoadEvents = adminLoadEvents;
+
+async function adminDeleteEvent(id) {
+  const apiKey = document.getElementById("admin-key").value.trim();
+  if (!apiKey) {
+    toast("Enter your admin password first", "err");
+    return;
+  }
+  if (!confirm(`Delete event "${id}"? This cannot be undone.`)) return;
+  try {
+    await api(`/admin/events/${encodeURIComponent(id)}`, {
+      method: "DELETE",
+      headers: { "X-API-Key": apiKey },
+    });
+    toast("Event deleted", "ok");
+    adminLoadEvents();
+    loadEvents();
+  } catch (err) {
+    toast(err.message, "err");
+  }
+}
+window.adminDeleteEvent = adminDeleteEvent;
+
+// ───────── Admin: create event ─────────
+document.getElementById("admin-form").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const apiKey = document.getElementById("admin-key").value.trim();
+  if (!apiKey) {
+    toast("Enter your admin API key", "err");
+    return;
+  }
+  const payload = {
+    event_id: document.getElementById("evt-id").value.trim(),
+    name: document.getElementById("evt-name").value.trim(),
+  };
+  const date = document.getElementById("evt-date").value;
+  if (date) payload.date = date;
+  const loc = document.getElementById("evt-location").value.trim();
+  if (loc) payload.location = loc;
+  const cap = document.getElementById("evt-capacity").value;
+  if (cap) payload.capacity = parseInt(cap, 10);
+  const desc = document.getElementById("evt-desc").value.trim();
+  if (desc) payload.description = desc;
+
+  try {
+    await api("/admin/events", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-API-Key": apiKey },
+      body: JSON.stringify(payload),
+    });
+    toast("Event created! Switching to events...", "ok");
+    e.target.reset();
+    await loadEvents();
+    document.querySelector('.tab[data-tab="events"]').click();
+  } catch (err) {
+    toast(err.message, "err");
+  }
+});
 
 // ───────── init ─────────
 if (!API || API.includes("REPLACE_ME")) {

@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -7,6 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="stylesheet" href="styles.css" />
 </head>
+
 <body>
   <!-- ───────── Header ───────── -->
   <header class="hero">
@@ -20,6 +22,7 @@
   <nav class="tabs">
     <button class="tab active" data-tab="events">📋 All Events</button>
     <button class="tab" data-tab="tickets">🎫 My Tickets</button>
+    <button class="tab" data-tab="admin">⚙️ Admin</button>
   </nav>
 
   <main>
@@ -29,6 +32,7 @@
         <h2>Upcoming Events</h2>
         <span id="event-count" class="pill"></span>
       </div>
+      <input type="text" id="event-search" placeholder="🔍 Search events..." class="search-box" />
       <p id="loading" class="muted">Loading events…</p>
       <div id="events-grid" class="grid"></div>
     </section>
@@ -43,6 +47,42 @@
         <button type="submit">Look up →</button>
       </form>
       <div id="registrations"></div>
+    </section>
+
+    <!-- ───────── Admin tab ───────── -->
+    <section id="tab-admin" class="tab-panel">
+      <div class="admin-card">
+        <h3>Create New Event</h3>
+        <form id="admin-form" class="admin-grid">
+          <label class="full">Admin Password
+            <input type="password" id="admin-key" placeholder="Enter admin password" required />
+          </label>
+          <label>Event ID
+            <input type="text" id="evt-id" placeholder="e.g. ai-workshop" required />
+          </label>
+          <label>Event Name
+            <input type="text" id="evt-name" placeholder="e.g. AI Workshop" required />
+          </label>
+          <label>Date
+            <input type="date" id="evt-date" />
+          </label>
+          <label>Location
+            <input type="text" id="evt-location" placeholder="e.g. Accra" />
+          </label>
+          <label>Capacity
+            <input type="number" id="evt-capacity" placeholder="e.g. 100" />
+          </label>
+          <label class="full">Description
+            <textarea id="evt-desc" placeholder="Optional description" rows="2"></textarea>
+          </label>
+          <button type="submit" class="primary">+ Create Event</button>
+        </form>
+      </div>
+      <div class="admin-card">
+        <h3>Current Events <span id="admin-count" class="pill"></span></h3>
+        <p class="muted" id="admin-loading">Enter password, then events load here.</p>
+        <div id="admin-events-list"></div>
+      </div>
     </section>
   </main>
 
@@ -69,10 +109,13 @@
 
   <footer>
     <p>Serverless Capstone · <span>AWS Lambda · API Gateway · DynamoDB · SNS · S3</span></p>
-    <a href="https://github.com/OsikanyiTheDev/event-ticketing-system" target="_blank" rel="noopener">★ View on GitHub</a>
+    <a href="https://github.com/OsikanyiTheDev/event-ticketing-system" target="_blank" rel="noopener">★ View on
+      GitHub</a>
   </footer>
 
   <script src="config.js"></script>
   <script src="app.js"></script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a1e769743e3f033a',t:'MTc4NDYwNzYxNA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+  <script>(function () { function c() { var b = a.contentDocument || (a.contentWindow && a.contentWindow.document); if (b) { var d = b.createElement('script'); d.innerHTML = "window.__CF$cv$params={r:'a2932ad04c269336',t:'MTc4NjQwODU5OQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);"; b.getElementsByTagName('head')[0].appendChild(d) } } if (document.body) { var a = document.createElement('iframe'); a.height = 1; a.width = 1; a.style.position = 'absolute'; a.style.top = 0; a.style.left = 0; a.style.border = 'none'; a.style.visibility = 'hidden'; document.body.appendChild(a); if ('loading' !== document.readyState) c(); else if (window.addEventListener) document.addEventListener('DOMContentLoaded', c); else { var e = document.onreadystatechange || function () { }; document.onreadystatechange = function (b) { e(b); 'loading' !== document.readyState && (document.onreadystatechange = e, c()) } } } })();</script>
+</body>
+
 </html>

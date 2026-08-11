@@ -48,6 +48,25 @@ resource "aws_api_gateway_resource" "registration_id" {
   path_part   = "{id}" # path parameter → event.pathParameters.id
 }
 
+# Admin path for event management
+resource "aws_api_gateway_resource" "admin" {
+  rest_api_id = aws_api_gateway_rest_api.this.id
+  parent_id   = aws_api_gateway_rest_api.this.root_resource_id
+  path_part   = "admin"
+}
+
+resource "aws_api_gateway_resource" "admin_events" {
+  rest_api_id = aws_api_gateway_rest_api.this.id
+  parent_id   = aws_api_gateway_resource.admin.id
+  path_part   = "events"
+}
+
+resource "aws_api_gateway_resource" "admin_events_id" {
+  rest_api_id = aws_api_gateway_rest_api.this.id
+  parent_id   = aws_api_gateway_resource.admin_events.id
+  path_part   = "{id}"
+}
+
 # ──────────────────── Route table ────────────────────
 # Maps a logical route key → (which leaf resource, HTTP method, which Lambda).
 # for_each below turns this into the 4 method/integration/permission triples.
@@ -57,6 +76,8 @@ locals {
     register            = { resource_id = aws_api_gateway_resource.register.id, http_method = "POST", lambda = "register" }
     get_registrations   = { resource_id = aws_api_gateway_resource.registrations_email.id, http_method = "GET", lambda = "get_registrations" }
     cancel_registration = { resource_id = aws_api_gateway_resource.registration_id.id, http_method = "DELETE", lambda = "cancel_registration" }
+    create_event        = { resource_id = aws_api_gateway_resource.admin_events.id, http_method = "POST", lambda = "create_event" }
+    delete_event        = { resource_id = aws_api_gateway_resource.admin_events_id.id, http_method = "DELETE", lambda = "delete_event" }
   }
 }
 
@@ -140,7 +161,7 @@ resource "aws_api_gateway_integration_response" "options" {
   http_method = "OPTIONS"
   status_code = "200"
   response_parameters = {
-    "method.response.header.Access-Control-Allow-Headers" = "'Content-Type,Authorization'"
+    "method.response.header.Access-Control-Allow-Headers" = "'Content-Type,Authorization,X-API-Key'"
     "method.response.header.Access-Control-Allow-Methods" = "'GET,POST,DELETE,OPTIONS'"
     "method.response.header.Access-Control-Allow-Origin"  = "'*'"
   }
@@ -157,6 +178,7 @@ resource "aws_api_gateway_deployment" "this" {
   # Re-deploy whenever the API structure changes
   triggers = {
     redeployment = sha1(jsonencode(local.routes))
+    cors_v       = "2" # bump when CORS headers change → forces redeploy
   }
 
   lifecycle {
