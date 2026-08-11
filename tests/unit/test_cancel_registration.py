@@ -24,7 +24,7 @@ def registrations_table(monkeypatch):
             AttributeDefinitions=[{"AttributeName": "registration_id", "AttributeType": "S"}],
             BillingMode="PAY_PER_REQUEST",
         )
-        yield table 
+        yield table
 
 
 def _event(reg_id):
