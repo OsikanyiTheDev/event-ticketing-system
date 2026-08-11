@@ -106,6 +106,32 @@ module "lambda_cancel_registration" {
   common_tags           = local.common_tags
 }
 
+module "lambda_create_event" {
+  source          = "../../modules/lambda_function"
+  function_name   = "${local.name_prefix}-create-event"
+  description     = "POST /admin/events — create event (admin, API-key protected)"
+  handler_app_dir = "${local.repo_root}/lambda/create_event"
+  common_dir      = "${local.repo_root}/lambda/common"
+  role_arn        = module.iam.lambda_exec_role_arn
+  environment_variables = merge(local.lambda_env, {
+    ADMIN_API_KEY = var.admin_api_key
+  })
+  common_tags = local.common_tags
+}
+
+module "lambda_delete_event" {
+  source          = "../../modules/lambda_function"
+  function_name   = "${local.name_prefix}-delete-event"
+  description     = "DELETE /admin/events/{id} — delete event (admin, API-key protected)"
+  handler_app_dir = "${local.repo_root}/lambda/delete_event"
+  common_dir      = "${local.repo_root}/lambda/common"
+  role_arn        = module.iam.lambda_exec_role_arn
+  environment_variables = merge(local.lambda_env, {
+    ADMIN_API_KEY = var.admin_api_key
+  })
+  common_tags = local.common_tags
+}
+
 module "api_gateway" {
   source      = "../../modules/api_gateway"
   api_name    = "${local.name_prefix}-api"
@@ -130,6 +156,14 @@ module "api_gateway" {
     cancel_registration = {
       invoke_arn    = module.lambda_cancel_registration.invoke_arn
       function_name = module.lambda_cancel_registration.function_name
+    }
+    create_event = {
+      invoke_arn    = module.lambda_create_event.invoke_arn
+      function_name = module.lambda_create_event.function_name
+    }
+    delete_event = {
+      invoke_arn    = module.lambda_delete_event.invoke_arn
+      function_name = module.lambda_delete_event.function_name
     }
   }
 }

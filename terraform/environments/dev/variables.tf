@@ -71,3 +71,8 @@ variable "app_subdomain" {
   type        = string
   default     = "ticketservice.osikanyi.online"
 }
+
+variable "admin_api_key" {
+  description = "API key for the admin event endpoint. Change in production (use Cognito instead)."
+  type        = string
+}
