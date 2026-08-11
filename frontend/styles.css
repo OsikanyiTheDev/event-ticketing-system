@@ -493,3 +493,40 @@ footer a {
     grid-template-columns: 1fr;
   }
 }
+
+/* ───────── Search + sold-out ───────── */
+.search-box {
+  width: 100%;
+  max-width: 420px;
+  padding: 0.7rem 1rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  font-size: 1rem;
+  font-family: inherit;
+  margin-bottom: 1.2rem;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.search-box:focus {
+  outline: none;
+  border-color: var(--brand);
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.15);
+}
+
+.sold-out {
+  background: var(--err);
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  vertical-align: middle;
+  margin-left: 0.4rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

@@ -64,28 +64,60 @@ async function loadEvents() {
       return;
     }
 
-    grid.innerHTML = EVENTS.map(
-      (e, i) => `
-      <div class="card">
-        <div class="card-banner">${iconFor(i)}</div>
-        <div class="card-body">
-          <h3>${escapeHtml(e.name)}</h3>
-          <p class="meta">📅 ${escapeHtml(e.date || "Date TBA")}</p>
-          <p class="meta">📍 ${escapeHtml(e.location || "Location TBA")}</p>
-          <p class="meta">🎟️ ${escapeHtml(String(e.capacity ?? "—"))} seats</p>
-          ${e.description ? `<p class="desc">${escapeHtml(e.description)}</p>` : ""}
-          <div class="card-cta">
-            <button class="primary block" onclick="openRegister('${escapeHtml(e.event_id)}')">Register</button>
-          </div>
-        </div>
-      </div>`
-    ).join("");
+    renderEvents(EVENTS);
   } catch (err) {
     loading.textContent = `⚠️ ${err.message}`;
     loading.className = "muted";
     toast(err.message, "err");
   }
 }
+
+// ───────── Render events (with search + sold-out) ─────────
+function renderEvents(list) {
+  const grid = document.getElementById("events-grid");
+  if (!list.length) {
+    grid.innerHTML = '<p class="muted">No events match your search.</p>';
+    return;
+  }
+  grid.innerHTML = list
+    .map((e, i) => {
+      const cap = e.capacity ? parseInt(e.capacity, 10) : null;
+      const reg = e.registered_count || 0;
+      const soldOut = cap !== null && reg >= cap;
+      const seats = cap ? `${reg} / ${cap} seats` : "Unlimited";
+      return `
+      <div class="card">
+        <div class="card-banner">${soldOut ? "🚫" : iconFor(i)}</div>
+        <div class="card-body">
+          <h3>${escapeHtml(e.name)} ${soldOut ? '<span class="sold-out">Sold Out</span>' : ""}</h3>
+          <p class="meta">📅 ${escapeHtml(e.date || "Date TBA")}</p>
+          <p class="meta">📍 ${escapeHtml(e.location || "Location TBA")}</p>
+          <p class="meta">🎟️ ${seats}</p>
+          ${e.description ? `<p class="desc">${escapeHtml(e.description)}</p>` : ""}
+          <div class="card-cta">
+            <button class="primary block" ${soldOut ? "disabled" : ""}
+              onclick="${soldOut ? "" : `openRegister('${escapeHtml(e.event_id)}')`}">
+              ${soldOut ? "Sold Out" : "Register"}
+            </button>
+          </div>
+        </div>
+      </div>`;
+    })
+    .join("");
+}
+
+// Search filter (client-side, instant)
+document.getElementById("event-search").addEventListener("input", (e) => {
+  const q = e.target.value.toLowerCase();
+  renderEvents(
+    EVENTS.filter(
+      (ev) =>
+        (ev.name || "").toLowerCase().includes(q) ||
+        (ev.location || "").toLowerCase().includes(q) ||
+        (ev.description || "").toLowerCase().includes(q)
+    )
+  );
+});
 
 // ───────── Register modal ─────────
 function openRegister(eventId) {
