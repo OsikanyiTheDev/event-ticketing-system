@@ -25,13 +25,16 @@ My cloud-computing capstone: a production-shaped, serverless REST API that lets 
 
 ## ✨ Features
 
-- **4 REST endpoints** (full CRUD for registrations + events listing)
+- **6 REST endpoints** (4 public + 2 admin — full CRUD for events &amp; registrations)
+- **Admin event management** — create &amp; delete events via UI (API-key protected)
 - **Input validation &amp; sanitization** — every field checked before it touches the DB
 - **Duplicate-prevention** — can't register twice for the same event (idempotent)
+- **Capacity enforcement** — events show "Sold Out" when full; registrations rejected at capacity
+- **Search &amp; filter** — instant client-side search by name, location, or description
 - **Confirmation emails** — SNS notifies the admin, SES emails the registrant from `hello@osikanyi.online`
 - **Custom HTTPS domain** — `https://ticketservice.osikanyi.online` via CloudFront + Route 53 + ACM
 - **CloudWatch alarms** — error-rate &gt; 5% &amp; throttles, with email alerts
-- **CI/CD** — ruff + unit tests + Terraform validate on every PR; branch protection
+- **CI** — ruff + unit tests + Terraform validate on every PR; branch protection
 - **Cost-guarded** — on-demand billing, log retention, $5/mo budget alerts → ~$0 idle
 - **100% Infrastructure-as-Code** — modular Terraform (domain + app layers), remote S3 state
 
@@ -39,12 +42,14 @@ My cloud-computing capstone: a production-shaped, serverless REST API that lets 
 
 ## 🔌 API Reference
 
-| Method   | Path                     | Purpose                       | Success |
-| -------- | ------------------------ | ----------------------------- | ------- |
-| `GET`    | `/events`                | List all events               | `200`   |
-| `POST`   | `/register`              | Register for an event         | `201`   |
-| `GET`    | `/registrations/{email}` | View a person's registrations | `200`   |
-| `DELETE` | `/registration/{id}`     | Cancel a registration         | `200`   |
+| Method   | Path                     | Purpose                            | Success |
+| -------- | ------------------------ | ---------------------------------- | ------- |
+| `GET`    | `/events`                | List all events (with seat counts) | `200`   |
+| `POST`   | `/register`              | Register for an event              | `201`   |
+| `GET`    | `/registrations/{email}` | View a person's registrations      | `200`   |
+| `DELETE` | `/registration/{id}`     | Cancel a registration              | `200`   |
+| `POST`   | `/admin/events`          | Create event (admin, API-key)      | `201`   |
+| `DELETE` | `/admin/events/{id}`     | Delete event (admin, API-key)      | `200`   |
 
 Base URL: `https://&lt;id&gt;.execute-api.us-east-1.amazonaws.com/dev` (the UI is wired to it automatically).
 
